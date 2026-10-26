@@ -19,12 +19,18 @@ fi
 cd /workspace/TRELLIS.2
 export CUDA_HOME=${CUDA_HOME:-/usr/local/cuda-12.4}
 
-# 3. Official dependency script. nvdiffrast / nvdiffrec are deliberately NOT installed:
-#    they are NVIDIA non-commercial licences. Add them only for evaluation (TEXTURE_MODE=pbr).
-#    o-voxel imports nvdiffrast at module level, so it is installed but only imported in pbr mode.
+# 3. Commercial-safe patch: o_voxel/__init__.py eagerly imports `postprocess`, the only
+#    o-voxel module that needs NVIDIA nvdiffrast (non-commercial licence). We remove that
+#    eager import so the shape decoder can use o_voxel.convert without nvdiffrast installed.
+#    (o-voxel is part of the MIT-licensed TRELLIS.2 repo, so this change is allowed.)
+sed -i '/^\s*postprocess,\s*$/d' o-voxel/o_voxel/__init__.py
+grep -q postprocess o-voxel/o_voxel/__init__.py && { echo "Patch failed - check o-voxel/o_voxel/__init__.py"; exit 1; }
+
+# 4. Official dependency script WITHOUT --nvdiffrast / --nvdiffrec (NVIDIA non-commercial).
+#    Add those two flags only on a separate evaluation machine if you want TEXTURE_MODE=pbr.
 . ./setup.sh --new-env --basic --flash-attn --cumesh --o-voxel --flexgemm
 
-# 4. 3DIT server extras
+# 5. 3DIT server extras
 conda activate trellis2
 pip install -r "$BACKEND_DIR/requirements.txt"
 echo "Install finished. Next: fill in $BACKEND_DIR/.env and run start.sh"

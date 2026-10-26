@@ -94,7 +94,8 @@ def run_trellis(image_path: str, seed: int, target_faces: int, out_dir: str) -> 
     glb_path = os.path.join(out_dir, "raw_y_up.glb")
     if TEXTURE_MODE == "pbr":
         # EVALUATION ONLY: uses nvdiffrast (NVIDIA non-commercial licence).
-        import o_voxel
+        # install.sh removes the eager import, so load the submodule explicitly.
+        import o_voxel.postprocess
 
         glb = o_voxel.postprocess.to_glb(
             vertices=mesh.vertices,
