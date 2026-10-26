@@ -22,7 +22,7 @@ import { Label } from "@/components/ui/label";
 type Props = {
   glbUrl?: string;
   /** Download links for a generated model; omit for the sample (exported in-browser). */
-  downloads?: { glb?: string; obj?: string; stl?: string };
+  downloads?: { glb?: string | undefined; obj?: string | undefined; stl?: string | undefined };
   fileName?: string;
 };
 

@@ -65,7 +65,7 @@ function CreatePage() {
     };
   }, [job?.id]);
 
-  function pick(f: File | undefined) {
+  function pick(f: File | undefined): void {
     if (!f) return;
     if (!/^image\/(png|jpeg|webp)$/.test(f.type)) return toast.error("Please use a PNG, JPG or WebP image.");
     if (f.size > 20 * 1024 * 1024) return toast.error("Image must be under 20 MB.");
