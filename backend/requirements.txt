@@ -1,0 +1,6 @@
+fastapi==0.115.*
+uvicorn[standard]==0.32.*
+requests==2.32.*
+trimesh[easy]==4.*
+fast-simplification
+# TRELLIS.2 and torch are installed in the Dockerfile following the official repo instructions.
