@@ -1,6 +1,9 @@
-fastapi==0.115.*
-uvicorn[standard]==0.32.*
-requests==2.32.*
-trimesh[easy]==4.*
-fast-simplification
-# TRELLIS.2 and torch are installed in the Dockerfile following the official repo instructions.
+# 3DIT server extras. Install AFTER TRELLIS.2's own setup.sh (which installs
+# torch 2.6.0 + CUDA 12.4, flash-attn 2.7.3, trimesh, transformers, CuMesh, FlexGEMM, o-voxel).
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+requests==2.32.3
+huggingface_hub>=0.26
+fast-simplification==0.1.9
+networkx>=3.0
+scipy>=1.10
