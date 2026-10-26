@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # One-time install on a RunPod pod (PyTorch / CUDA 12.4 template, Ubuntu 22.04).
 # Run from inside the 3dit backend folder:  bash install.sh
-set -euo pipefail
+set -eo pipefail   # (no -u: conda and setup.sh use unset variables)
 BACKEND_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd /workspace
+# setup.sh calls sudo; RunPod pods run as root without it
+command -v sudo >/dev/null || { apt-get update && apt-get install -y sudo; }
 
 # 1. Miniconda (TRELLIS.2 recommends conda)
 if [ ! -d /workspace/miniconda3 ]; then
