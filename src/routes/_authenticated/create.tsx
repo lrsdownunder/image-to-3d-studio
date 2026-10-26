@@ -113,6 +113,18 @@ function CreatePage() {
             </AlertDescription>
           </Alert>
         )}
+        {backend?.configured && (
+          <div className="mt-6 flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-3 text-sm">
+            <span
+              className={`size-2 rounded-full ${backend.modelLoaded ? "bg-success" : backend.reachable ? "bg-warning" : "bg-destructive"}`}
+            />
+            {backend.modelLoaded
+              ? `AI server ready${backend.gpu ? ` · ${backend.gpu}` : ""}`
+              : backend.loading
+                ? "AI server is starting up (loading the model)…"
+                : backend.error ?? "AI server not ready"}
+          </div>
+        )}
 
         <button
           type="button"
