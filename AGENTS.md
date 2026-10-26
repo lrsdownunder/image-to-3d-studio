@@ -15,3 +15,4 @@
 - Job status is written only by server code (service role) and the HMAC-verified callback route; users have read-only access to jobs, so progress can't be faked from the browser.
 - Uploads and outputs live in private buckets under `<user_id>/...` and are served via signed URLs; the GPU only gets signed URLs, never Cloud keys.
 - The three.js viewer is loaded through `LazyViewer` (ClientOnly + lazy) so three never runs during SSR.
+- The GPU backend must use only commercially licensed parts by default (no nvdiffrast/nvdiffrec, no RMBG-2.0); non-commercial components stay behind an opt-in evaluation flag, because 3DIT is a commercial product.
