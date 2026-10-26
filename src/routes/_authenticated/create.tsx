@@ -65,10 +65,16 @@ function CreatePage() {
     };
   }, [job?.id]);
 
-  function pick(f: File | undefined): void {
+  function pick(f: File | undefined) {
     if (!f) return;
-    if (!/^image\/(png|jpeg|webp)$/.test(f.type)) return toast.error("Please use a PNG, JPG or WebP image.");
-    if (f.size > 20 * 1024 * 1024) return toast.error("Image must be under 20 MB.");
+    if (!/^image\/(png|jpeg|webp)$/.test(f.type)) {
+      toast.error("Please use a PNG, JPG or WebP image.");
+      return;
+    }
+    if (f.size > 20 * 1024 * 1024) {
+      toast.error("Image must be under 20 MB.");
+      return;
+    }
     setFile(f);
     setJob(null);
   }
@@ -77,7 +83,7 @@ function CreatePage() {
     if (!file) return;
     setBusy(true);
     try {
-      const ext = file.type.split("/")[1].replace("jpeg", "jpg");
+      const ext = (file.type.split("/")[1] ?? "png").replace("jpeg", "jpg");
       const path = `${userId}/${crypto.randomUUID()}.${ext}`;
       const { error } = await supabase.storage.from("inputs").upload(path, file, { contentType: file.type });
       if (error) throw error;
