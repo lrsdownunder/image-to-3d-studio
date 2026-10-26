@@ -10,16 +10,45 @@ import {
   type ImageTo3DRequest,
 } from "@/lib/backend-contract";
 
-/** Tells the UI whether the GPU backend has been configured (never reveals values). */
+export type BackendHealth = {
+  configured: boolean;
+  reachable: boolean;
+  modelLoaded: boolean;
+  loading: boolean;
+  gpu: string | null;
+  error: string | null;
+};
+
+/** Tells the UI whether the GPU backend is configured and healthy (never reveals secrets). */
 export const getBackendStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => {
+  .handler(async (): Promise<BackendHealth> => {
+    const url = process.env["GENERATION_BACKEND_URL"];
     const configured = Boolean(
-      process.env["GENERATION_BACKEND_URL"] &&
-        process.env["GENERATION_BACKEND_TOKEN"] &&
-        process.env["GENERATION_CALLBACK_SECRET"],
+      url && process.env["GENERATION_BACKEND_TOKEN"] && process.env["GENERATION_CALLBACK_SECRET"],
     );
-    return { configured };
+    const base = { configured, reachable: false, modelLoaded: false, loading: false, gpu: null, error: null };
+    if (!configured || !url) return base;
+    try {
+      const res = await fetch(`${url.replace(/\/+$/, "")}/health`, { signal: AbortSignal.timeout(5000) });
+      if (!res.ok) return { ...base, error: `Health check returned ${res.status}` };
+      const h = (await res.json()) as {
+        model_loaded?: boolean;
+        loading?: boolean;
+        load_error?: string | null;
+        gpu?: { name?: string | null };
+      };
+      return {
+        configured,
+        reachable: true,
+        modelLoaded: Boolean(h.model_loaded),
+        loading: Boolean(h.loading),
+        gpu: h.gpu?.name ?? null,
+        error: h.load_error ?? null,
+      };
+    } catch {
+      return { ...base, error: "AI server did not respond" };
+    }
   });
 
 const createJobInput = z.object({
