@@ -50,15 +50,30 @@ Microsoft tested it on **A100 and H100**.
 | RTX 4090 / 3090 (24 GB) | 24 GB | ⚠️ Bare minimum; use `TRELLIS_PIPELINE_TYPE=512` or `1024_cascade` |
 | Anything under 24 GB, or V100 | — | ❌ Not supported (V100 lacks flash-attn) |
 
-**Software:** Ubuntu 22.04, **CUDA Toolkit 12.4**, Python **3.10** (made by the script),
-PyTorch **2.6.0**, flash-attn **2.7.3**. Pick the RunPod template
-**"RunPod PyTorch 2.x — CUDA 12.4"** (any template with `nvcc` 12.4 works).
+**Software:** Ubuntu 22.04, **CUDA 12.4**, Python **3.10** (made by the script),
+PyTorch **2.6.0** (cu124), flash-attn **2.7.3**.
 
-**Disk:** a **≥ 100 GB network volume** mounted at `/workspace`, so the model (~16 GB plus
-extras) and the install survive restarts.
+**Docker image to use (official RunPod):** `runpod/pytorch:0.7.0-ubuntu2204-cu1241-torch260`
+(Ubuntu 22.04, CUDA 12.4.1, PyTorch 2.6.0). Check it exists at
+https://hub.docker.com/r/runpod/pytorch/tags?name=ubuntu2204-cu1241-torch260 — the tag
+must appear in the list. Avoid CUDA 12.8 / Ubuntu 24.04 templates for the first test.
+If the image has no CUDA 12.4 compiler, `install.sh` installs one inside its own environment.
+
+**Disk:**
+| Disk | Minimum | Recommended | Holds |
+| --- | --- | --- | --- |
+| Container disk | 20 GB | 30–50 GB | System + apt packages (wiped when the pod stops) |
+| Network/persistent volume at `/workspace` | 60 GB | **100 GB** | Conda env (~15 GB), model weights (~19 GB), pip + Hugging Face caches, build files, outputs |
+
+`install.sh` and `start.sh` point every cache (`HF_HOME`, `PIP_CACHE_DIR`, `TORCH_HOME`,
+temporary build files) at `/workspace`, so nothing large is lost when the pod stops.
 
 **Time:** first install ≈ 30–60 min (it compiles GPU code). First start ≈ 5–10 min
 (downloads the model). Each job ≈ 1–3 min depending on GPU and settings.
+
+**Not yet verified on a real GPU** (must be checked during the first test): the whole install
+finishing cleanly, flash-attn using a prebuilt wheel, model download + load, BiRefNet working
+as the background remover, VRAM use on the A6000, and one complete image → 3D job.
 
 ---
 
@@ -72,9 +87,12 @@ extras) and the install survive restarts.
 
 ### Step 2 — RunPod (this is where you start paying — only when you're ready)
 1. Create an account at runpod.io and add credit.
-2. **Storage → New Network Volume**, 100 GB, in a region that has your chosen GPU.
-3. **Pods → Deploy**: pick the GPU (section 2), the CUDA 12.4 PyTorch template, attach the
-   volume at `/workspace`, and under **Expose HTTP Ports** add `8000`.
+2. **Storage → New Network Volume**, 100 GB, in a region that has an RTX A6000.
+3. **Pods → Deploy**: pick **RTX A6000**, click **Change Template → custom / edit**, and set
+   the container image to `runpod/pytorch:0.7.0-ubuntu2204-cu1241-torch260`.
+   Container disk **30 GB**, attach the volume at `/workspace`, and under
+   **Expose HTTP Ports** add `8000`.
+4. Once the pod starts, open its terminal and run `nvidia-smi` — you should see the A6000.
 
 ### Step 3 — Copy this folder to the pod
 In the pod's **Web Terminal** (or Jupyter):
