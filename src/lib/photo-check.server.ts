@@ -45,7 +45,7 @@ export async function runPhotoCheck(imageUrl: string, signal?: AbortSignal): Pro
     ],
     output: Output.object({ schema: photoCheckSchema }),
     maxRetries: 0,
-    abortSignal: signal,
+    ...(signal ? { abortSignal: signal } : {}),
     onError: ({ error }) => {
       failure = error;
     },
