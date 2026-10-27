@@ -10,10 +10,11 @@ step() { STEP="$1"; echo; echo "==== [3DIT install] $1 ===="; }
 fail() { echo; echo "XXXX [3DIT install] FAILED at: $STEP"; echo "     $1"; echo "     Copy the last 40 lines above (or install.log) to Lovable."; exit 1; }
 trap 'fail "command failed on line $LINENO"' ERR
 
-# Everything large lives on the persistent volume (/workspace), not the container disk.
+# RunPod network/global volumes refuse chmod, which breaks conda, git and compilers.
+# So programs go on the container disk (/root); only model downloads use /workspace.
 export HF_HOME=/workspace/hf-cache
-export PIP_CACHE_DIR=/workspace/pip-cache
-export TMPDIR=/workspace/tmp
+export PIP_CACHE_DIR=/root/pip-cache
+export TMPDIR=/root/tmp
 mkdir -p "$HF_HOME" "$PIP_CACHE_DIR" "$TMPDIR"
 
 step "1/9 Checking GPU, disk and volume"
@@ -23,28 +24,29 @@ VRAM_MB=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits | he
 [ "$VRAM_MB" -ge 23000 ] || fail "GPU has ${VRAM_MB} MB VRAM; TRELLIS.2 needs 24 GB+."
 mountpoint -q /workspace || echo "WARNING: /workspace is not a separate volume - files may be lost when the pod stops."
 FREE_GB=$(df -BG --output=avail /workspace | tail -1 | tr -dc 0-9)
-[ "$FREE_GB" -ge 60 ] || fail "/workspace has only ${FREE_GB} GB free; need 60 GB+ (100 GB recommended)."
+[ "$FREE_GB" -ge 60 ] || echo "WARNING: /workspace reports ${FREE_GB} GB free (fine for elastic global volumes)."
 ROOT_FREE=$(df -BG --output=avail / | tail -1 | tr -dc 0-9)
-[ "$ROOT_FREE" -ge 15 ] || echo "WARNING: container disk has ${ROOT_FREE} GB free; 30 GB+ recommended."
+[ "$ROOT_FREE" -ge 30 ] || fail "Container disk has ${ROOT_FREE} GB free; need 30 GB+ (50 GB recommended)."
 
 step "2/9 System packages"
-command -v sudo >/dev/null || { apt-get update && apt-get install -y sudo; }
-apt-get update && apt-get install -y git wget build-essential libjpeg-dev
+command -v sudo >/dev/null || { apt-get update || true; apt-get install -y sudo; }
+apt-get update || echo "WARNING: apt-get update had errors (often an expired key) - continuing."
+apt-get install -y git wget build-essential libjpeg-dev
 
 step "3/9 Miniconda"
-if [ ! -d /workspace/miniconda3 ]; then
+if [ ! -d /root/miniconda3 ]; then
   wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/mc.sh
-  bash /tmp/mc.sh -b -p /workspace/miniconda3
+  bash /tmp/mc.sh -b -p /root/miniconda3
 fi
-source /workspace/miniconda3/etc/profile.d/conda.sh
+source /root/miniconda3/etc/profile.d/conda.sh
 conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main 2>/dev/null || true
 conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r 2>/dev/null || true
 
 step "4/9 TRELLIS.2 source"
-if [ ! -d /workspace/TRELLIS.2 ]; then
-  git clone -b main https://github.com/microsoft/TRELLIS.2.git --recursive /workspace/TRELLIS.2
+if [ ! -d /root/TRELLIS.2 ]; then
+  git clone -b main https://github.com/microsoft/TRELLIS.2.git --recursive /root/TRELLIS.2
 fi
-cd /workspace/TRELLIS.2
+cd /root/TRELLIS.2
 
 step "5/9 Python 3.10 env + CUDA 12.4 compiler + PyTorch 2.6.0"
 conda env list | grep -q '^trellis2 ' || conda create -y -n trellis2 python=3.10
