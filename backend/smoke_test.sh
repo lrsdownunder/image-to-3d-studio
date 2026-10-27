@@ -3,10 +3,11 @@
 set -eo pipefail
 BACKEND_DIR="$(cd "$(dirname "$0")" && pwd)"
 [ -f "$BACKEND_DIR/.env" ] || { echo "Missing .env - see README step 5."; exit 1; }
-source /workspace/miniconda3/etc/profile.d/conda.sh
+[ -f /root/miniconda3/etc/profile.d/conda.sh ] || { echo "Programs not installed on this pod (container disk resets when a pod is replaced). Run: bash install.sh"; exit 1; }
+source /root/miniconda3/etc/profile.d/conda.sh
 conda activate trellis2
 set -a; source "$BACKEND_DIR/.env"; set +a
-export PYTHONPATH="/workspace/TRELLIS.2:${PYTHONPATH:-}"
+export PYTHONPATH="/root/TRELLIS.2:${PYTHONPATH:-}"
 export HF_HOME=/workspace/hf-cache HF_HUB_CACHE=/workspace/hf-cache/hub TORCH_HOME=/workspace/torch-cache
 cd "$BACKEND_DIR"
 python smoke_test.py "$@" 2>&1 | tee smoke_test.log

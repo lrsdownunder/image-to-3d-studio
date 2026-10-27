@@ -39,8 +39,8 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     image_path = sys.argv[1] if len(sys.argv) > 1 else None
     if not image_path:
-        examples = sorted(glob.glob("/workspace/TRELLIS.2/assets/example_image/*.png")) + sorted(
-            glob.glob("/workspace/TRELLIS.2/assets/example_image/*.jpg"))
+        examples = sorted(glob.glob("/root/TRELLIS.2/assets/example_image/*.png")) + sorted(
+            glob.glob("/root/TRELLIS.2/assets/example_image/*.jpg"))
         if not examples:
             record("find test photo", False, "no example images; pass a photo path")
             finish()
