@@ -2,10 +2,12 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { ImageUp, Loader2, PlugZap } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ImageUp, Loader2, PlugZap, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { createImageTo3DJob, getBackendStatus } from "@/lib/generation.functions";
+import { checkPhoto } from "@/lib/photo-check.functions";
+import type { PhotoCheck } from "@/lib/photo-check";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,6 +43,10 @@ function CreatePage() {
   const [title, setTitle] = useState("");
   const [busy, setBusy] = useState(false);
   const [job, setJob] = useState<Job | null>(null);
+  const checkFn = useServerFn(checkPhoto);
+  const [uploadedPath, setUploadedPath] = useState<string | null>(null);
+  const [check, setCheck] = useState<PhotoCheck | null>(null);
+  const [checking, setChecking] = useState(false);
 
   useEffect(() => {
     if (!file) return setPreview(null);
@@ -77,16 +83,42 @@ function CreatePage() {
     }
     setFile(f);
     setJob(null);
+    setUploadedPath(null);
+    setCheck(null);
+  }
+
+  /** Upload once; reuse the same stored photo for the AI check and the 3D job. */
+  async function ensureUploaded(): Promise<string> {
+    if (uploadedPath) return uploadedPath;
+    if (!file) throw new Error("Choose a photo first");
+    const ext = (file.type.split("/")[1] ?? "png").replace("jpeg", "jpg");
+    const path = `${userId}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from("inputs").upload(path, file, { contentType: file.type });
+    if (error) throw error;
+    setUploadedPath(path);
+    return path;
+  }
+
+  async function runCheck() {
+    setChecking(true);
+    setCheck(null);
+    try {
+      const path = await ensureUploaded();
+      const res = await checkFn({ data: { inputPath: path } });
+      if (res.error || !res.result) toast.error(res.error ?? "The AI couldn't check this photo.");
+      else setCheck(res.result);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not check photo");
+    } finally {
+      setChecking(false);
+    }
   }
 
   async function generate() {
     if (!file) return;
     setBusy(true);
     try {
-      const ext = (file.type.split("/")[1] ?? "png").replace("jpeg", "jpg");
-      const path = `${userId}/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("inputs").upload(path, file, { contentType: file.type });
-      if (error) throw error;
+      const path = await ensureUploaded();
       const res = await createFn({ data: { inputPath: path, title: title || undefined } });
       const { data } = await supabase.from("generation_jobs").select("*").eq("id", res.jobId).single();
       setJob(data);
@@ -158,20 +190,91 @@ function CreatePage() {
           <Label htmlFor="title">Name (optional)</Label>
           <Input id="title" maxLength={120} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Garden gnome" />
         </div>
-        <Button variant="hero" size="lg" className="mt-4 w-full" disabled={!file || busy} onClick={generate}>
-          {busy && <Loader2 className="animate-spin" />} Generate 3D model
-        </Button>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          <Button variant="outline" size="lg" disabled={!file || checking || busy} onClick={runCheck}>
+            {checking ? <Loader2 className="animate-spin" /> : <Sparkles />} Check my photo
+          </Button>
+          <Button variant="hero" size="lg" disabled={!file || busy} onClick={generate}>
+            {busy && <Loader2 className="animate-spin" />} Generate 3D model
+          </Button>
+        </div>
       </section>
 
-      <section className="rounded-xl border border-border bg-card p-6">
-        <h2 className="font-semibold">Status</h2>
-        {!job ? (
-          <p className="mt-2 text-sm text-muted-foreground">Your job will appear here.</p>
-        ) : (
-          <JobStatus job={job} />
-        )}
+      <section className="space-y-6 rounded-xl border border-border bg-card p-6">
+        <div>
+          <h2 className="font-semibold">Photo check</h2>
+          {checking ? (
+            <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" /> The AI is looking at your photo…
+            </p>
+          ) : check ? (
+            <PhotoCheckResult check={check} />
+          ) : (
+            <p className="mt-2 text-sm text-muted-foreground">
+              Tap "Check my photo" for an AI opinion on how well it will turn into a printable model.
+            </p>
+          )}
+        </div>
+        <div>
+          <h2 className="font-semibold">Status</h2>
+          {!job ? (
+            <p className="mt-2 text-sm text-muted-foreground">Your job will appear here.</p>
+          ) : (
+            <JobStatus job={job} />
+          )}
+        </div>
       </section>
     </main>
+  );
+}
+
+function PhotoCheckResult({ check }: { check: PhotoCheck }) {
+  const tone = { good: "text-success", okay: "text-warning", poor: "text-destructive" }[check.verdict];
+  const label = { good: "Great for 3D", okay: "Usable, could be better", poor: "Likely to give a poor model" }[check.verdict];
+  return (
+    <div className="mt-3 space-y-4 text-sm">
+      <div className="flex items-baseline justify-between">
+        <span className={`font-semibold ${tone}`}>{label}</span>
+        <span className="font-mono text-muted-foreground">{check.score}/100</span>
+      </div>
+      <Progress value={check.score} />
+      <p className="text-muted-foreground">{check.summary}</p>
+      {check.strengths.length > 0 && (
+        <ul className="space-y-1">
+          {check.strengths.map((s) => (
+            <li key={s} className="flex gap-2">
+              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" /> {s}
+            </li>
+          ))}
+        </ul>
+      )}
+      {check.issues.length > 0 && (
+        <div>
+          <h3 className="mb-1 font-medium">How to improve the photo</h3>
+          <ul className="space-y-2">
+            {check.issues.map((i) => (
+              <li key={i.problem} className="flex gap-2">
+                <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
+                <span>
+                  {i.problem} <span className="text-muted-foreground">— {i.fix}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {check.print_tips.length > 0 && (
+        <div>
+          <h3 className="mb-1 font-medium">Printing tips</h3>
+          <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+            {check.print_tips.map((t) => (
+              <li key={t}>{t}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <p className="text-xs text-muted-foreground">AI advice — it can be wrong. You can still generate either way.</p>
+    </div>
   );
 }
 
