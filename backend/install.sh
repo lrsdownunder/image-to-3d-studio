@@ -24,7 +24,7 @@ VRAM_MB=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits | he
 [ "$VRAM_MB" -ge 23000 ] || fail "GPU has ${VRAM_MB} MB VRAM; TRELLIS.2 needs 24 GB+."
 mountpoint -q /workspace || echo "WARNING: /workspace is not a separate volume - files may be lost when the pod stops."
 FREE_GB=$(df -BG --output=avail /workspace | tail -1 | tr -dc 0-9)
-[ "$FREE_GB" -ge 60 ] || echo "WARNING: /workspace reports ${FREE_GB} GB free (fine for elastic global volumes)." # "/workspace has only ${FREE_GB} GB free; need 60 GB+ (100 GB recommended)."
+[ "$FREE_GB" -ge 60 ] || echo "WARNING: /workspace reports ${FREE_GB} GB free (fine for elastic global volumes)."
 ROOT_FREE=$(df -BG --output=avail / | tail -1 | tr -dc 0-9)
 [ "$ROOT_FREE" -ge 30 ] || fail "Container disk has ${ROOT_FREE} GB free; need 30 GB+ (50 GB recommended)."
 
