@@ -126,6 +126,20 @@ Fill in:
 
 Save with Ctrl+O, Enter, Ctrl+X. **Keep both passwords** — you will paste them into Lovable.
 
+### Step 5½ — Smoke test on the GPU (do this before starting the server)
+```sh
+cd /workspace/3dit-backend
+bash smoke_test.sh              # uses a TRELLIS.2 example photo
+bash smoke_test.sh my_photo.png # or your own photo
+```
+It checks, one by one: the GPU is visible, the model loads (with the commercial-safe
+BiRefNet background remover), background removal works, and one complete photo → 3D job
+produces GLB/OBJ/STL files. It prints timings and peak GPU memory, and ends with
+**RESULT: ALL PASSED** or **FAILED**. Files land in `smoke_out/` (open
+`1_no_background.png` to see the cut-out). The first run also downloads the model (~19 GB).
+If it fails, paste `smoke_test.log` to Lovable. Stop the server first if it's running —
+both need the GPU.
+
 ### Step 6 — Start the server
 ```sh
 bash /workspace/3dit-backend/start.sh
