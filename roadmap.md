@@ -8,7 +8,9 @@
 - [x] Install scripts + README for Ubuntu 22.04 / CUDA 12.4 / A6000
 - [x] RunPod smoke-test command (model load, background removal, one full job)
 - [x] AI photo check on Create page (printability + tips)
-- [ ] Phase 2 (outside Lovable): deploy `backend/` on RunPod — blocked on user (Hugging Face DINOv3 access, RunPod account)
-- [ ] Phase 2: add backend secrets and run a real end-to-end test — blocked on Phase 2 deploy
+- [x] Phase 2: deployed `backend/` on RunPod (RTX A6000 48GB, CUDA 12.4 image, 100GB persistent volume)
+- [x] Phase 2: smoke test ALL PASSED on real GPU — model load, background removal, full image->3D job, GLB/OBJ/STL written
+- [ ] Phase 2: start FastAPI server on port 8000 and connect the 3DIT website to it (needs pod running + backend secrets)
+- [ ] Phase 2: real end-to-end test from the website (upload photo -> real model in library)
 - [ ] Phase 3: Blender clean-up, print sizing in mm
 - [ ] Phase 4: Text-to-image-to-3D with a self-hosted, commercially licensed image model
