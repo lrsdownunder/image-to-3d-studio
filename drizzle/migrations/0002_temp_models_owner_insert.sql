@@ -1,0 +1,1 @@
+CREATE POLICY "temp owner repair insert" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'models' AND (storage.foldername(name))[1] = (auth.uid())::text);
