@@ -37,8 +37,12 @@ function applyWireframe(root: THREE.Object3D, on: boolean) {
 
 function GlbModel({ url, wireframe, onLoad }: { url: string; wireframe: boolean; onLoad: (o: THREE.Object3D) => void }) {
   const { scene } = useGLTF(url);
-  useEffect(() => onLoad(scene), [scene, onLoad]);
-  useEffect(() => applyWireframe(scene, wireframe), [scene, wireframe]);
+  useEffect(() => {
+    onLoad(scene);
+  }, [scene, onLoad]);
+  useEffect(() => {
+    applyWireframe(scene, wireframe);
+  }, [scene, wireframe]);
   return <primitive object={scene} />;
 }
 
