@@ -1,0 +1,1 @@
+DROP POLICY "temp owner repair update" ON storage.objects; DROP POLICY "temp owner repair insert" ON storage.objects;
