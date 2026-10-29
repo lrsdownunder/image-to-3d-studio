@@ -30,7 +30,7 @@ const Fallback = () => (
 /** Keeps a 3D viewer problem inside the viewer box instead of taking down the whole page. */
 class ViewerBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   override state = { error: null as Error | null };
-  static override getDerivedStateFromError(error: Error) {
+  static getDerivedStateFromError(error: Error) {
     return { error };
   }
   override componentDidCatch(error: Error) {
