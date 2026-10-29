@@ -184,7 +184,10 @@ export const syncJobFromBackend = createServerFn({ method: "POST" })
         signal: AbortSignal.timeout(8000),
       });
       if (!res.ok) return { ok: false as const };
-      const parsed = callbackSchema.safeParse({ ...(await res.json()), job_id: job.id });
+      const raw = Object.fromEntries(
+        Object.entries((await res.json()) as Record<string, unknown>).filter(([, v]) => v != null),
+      );
+      const parsed = callbackSchema.safeParse({ ...raw, job_id: job.id });
       if (!parsed.success) return { ok: false as const };
       const { applyJobUpdate } = await import("@/lib/job-update.server");
       await applyJobUpdate(parsed.data);
