@@ -120,12 +120,12 @@ export default function ModelViewer({ glbUrl, downloads, fileName = "3dit-model"
     <div className="flex flex-col gap-3">
       <div className="relative aspect-square w-full overflow-hidden rounded-xl border border-border bg-viewport sm:aspect-[4/3]">
         <Canvas shadows dpr={[1, 2]} camera={{ position: [2.5, 1.8, 3], fov: 40 }}>
-          <color attach="background" args={["#1a1714"]} />
+          <color attach="background" args={["#222222"]} />
           <ambientLight intensity={0.4} />
           <directionalLight position={[4, 6, 3]} intensity={1.6} castShadow />
           <Environment resolution={128}>
             <Lightformer intensity={2} position={[0, 5, 0]} scale={[10, 10, 1]} />
-            <Lightformer intensity={1.2} color="#ffb070" position={[-5, 1, -1]} rotation-y={Math.PI / 2} scale={[20, 1, 1]} />
+            <Lightformer intensity={1.2} color="#c9bcff" position={[-5, 1, -1]} rotation-y={Math.PI / 2} scale={[20, 1, 1]} />
             <Lightformer intensity={0.8} position={[5, 1, 1]} rotation-y={-Math.PI / 2} scale={[20, 1, 1]} />
           </Environment>
           <Suspense fallback={null}>
@@ -143,15 +143,15 @@ export default function ModelViewer({ glbUrl, downloads, fileName = "3dit-model"
           <Grid
             position={[0, -0.001, 0]}
             args={[10, 10]}
-            cellColor="#3a332c"
-            sectionColor="#5a4a3a"
+            cellColor="#363636"
+            sectionColor="#4d4470"
             fadeDistance={12}
             infiniteGrid
           />
           <OrbitControls makeDefault autoRotate={autoRotate} autoRotateSpeed={1.2} enableDamping />
         </Canvas>
         {!glbUrl && (
-          <span className="absolute left-3 top-3 rounded bg-background/80 px-2 py-1 font-mono text-xs text-muted-foreground">
+          <span className="absolute left-3 top-3 rounded-full bg-viewport-foreground/10 px-3 py-1 font-mono text-xs text-viewport-foreground">
             SAMPLE SHAPE — not AI generated
           </span>
         )}
@@ -167,6 +167,7 @@ export default function ModelViewer({ glbUrl, downloads, fileName = "3dit-model"
             <Switch id="spin" checked={autoRotate} onCheckedChange={setAutoRotate} />
             <Label htmlFor="spin">Auto-spin</Label>
           </div>
+          <span className="hidden text-xs text-muted-foreground md:inline">Drag to rotate · scroll or pinch to zoom</span>
         </div>
         <div className="flex gap-2">
           {(["stl", "obj", "glb"] as const).map((k) =>

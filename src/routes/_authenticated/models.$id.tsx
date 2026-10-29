@@ -6,9 +6,9 @@ import { LazyViewer } from "@/components/LazyViewer";
 export const Route = createFileRoute("/_authenticated/models/$id")({
   head: () => ({
     meta: [
-      { title: "Model — 3DIT" },
+      { title: "Model — Majoto 3D" },
       { name: "description", content: "View and download your 3D model." },
-      { property: "og:title", content: "Model — 3DIT" },
+      { property: "og:title", content: "Model — Majoto 3D" },
       { property: "og:description", content: "View and download your 3D model." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
