@@ -57,7 +57,7 @@ export const getBackendStatus = createServerFn({ method: "GET" })
           signal: AbortSignal.timeout(5000),
         });
         tokenAccepted = k.status !== 401;
-        console.log(`[3DIT] key check: status ${k.status}, token length ${token.length}`);
+        console.log(`[3DIT] key check: status ${k.status}`);
       } catch {
         tokenAccepted = null;
       }
