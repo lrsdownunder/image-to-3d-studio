@@ -38,12 +38,32 @@ function NotFoundComponent() {
   );
 }
 
+const STALE_RELOAD_KEY = "3dit-stale-reloaded";
+
+/** Errors that mean the browser holds an outdated copy of the app's files. */
+function isStaleFileError(error: unknown) {
+  const msg = error instanceof Error ? error.message : String(error);
+  return /dynamically imported module|Importing a module script failed|error loading dynamically|Failed to fetch|Outdated Optimize Dep|ChunkLoadError/i.test(
+    msg,
+  );
+}
+
 function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    // An app update can leave the open tab pointing at old files. Reload once to pick up fresh ones.
+    if (isStaleFileError(error) && !sessionStorage.getItem(STALE_RELOAD_KEY)) {
+      sessionStorage.setItem(STALE_RELOAD_KEY, "1");
+      window.location.reload();
+      return;
+    }
+    const t = setTimeout(() => sessionStorage.removeItem(STALE_RELOAD_KEY), 10000);
+    return () => clearTimeout(t);
   }, [error]);
+
+  const message = error instanceof Error ? error.message : String(error);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -54,6 +74,11 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
         <p className="mt-2 text-sm text-muted-foreground">
           Something went wrong on our end. You can try refreshing or head back home.
         </p>
+        {message && (
+          <p className="mt-3 break-words rounded-md border border-border bg-muted/40 px-3 py-2 font-mono text-xs text-muted-foreground">
+            {message}
+          </p>
+        )}
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
