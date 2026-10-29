@@ -24,6 +24,13 @@ SHELL ["/opt/conda/bin/conda", "run", "--no-capture-output", "-n", "trellis2", "
 RUN pip install --no-cache-dir torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu124 \
     && pip install --no-cache-dir ninja packaging wheel psutil
 
+# CUDA 12.4 compiler inside the env (the base image may lack nvcc/headers), same as install.sh.
+RUN /opt/conda/bin/conda install -y -n trellis2 -c "nvidia/label/cuda-12.4.1" \
+      cuda-nvcc cuda-cudart-dev cuda-libraries-dev cuda-cccl \
+    && /opt/conda/bin/conda clean -afy
+ENV CUDA_HOME=/opt/conda/envs/trellis2 \
+    PATH=/opt/conda/envs/trellis2/bin:$PATH
+
 # Prebuilt flash-attn wheel (avoids a multi-hour compile on GitHub's small machines)
 RUN pip install --no-cache-dir \
     https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.3/flash_attn-2.7.3+cu12torch2.6cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
@@ -36,8 +43,11 @@ RUN git clone -b main --recursive https://github.com/microsoft/TRELLIS.2.git /op
     && sed -i 's/^\(\s*\)pip install pillow-simd$/\1pip install pillow-simd || pip install pillow/' setup.sh
 
 # CUDA extensions compile without a GPU because TORCH_CUDA_ARCH_LIST is fixed above (A6000 = 8.6).
-RUN cd /opt/TRELLIS.2 && (. ./setup.sh --basic --cumesh --o-voxel --flexgemm || true) \
-    && for m in cumesh flex_gemm o_voxel utils3d trimesh transformers flash_attn; do python -c "import $m" || exit 1; done
+# GitHub has no GPU, so only check that packages are installed (not imported; importing needs a GPU driver).
+RUN nvcc --version && cd /opt/TRELLIS.2 && (. ./setup.sh --basic --cumesh --o-voxel --flexgemm || true) \
+    && for m in cumesh flex_gemm o_voxel utils3d trimesh transformers flash_attn; do \
+         python -c "import importlib.util,sys; sys.exit(0 if importlib.util.find_spec('$m') else 1)" \
+         || { echo "MISSING package: $m"; exit 1; }; done
 
 COPY requirements.txt /opt/majoto-backend/requirements.txt
 RUN pip install --no-cache-dir -r /opt/majoto-backend/requirements.txt
