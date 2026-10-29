@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, CheckCircle2, ImageUp, Loader2, PlugZap, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { createImageTo3DJob, getBackendStatus } from "@/lib/generation.functions";
+import { createImageTo3DJob, getBackendStatus, syncJobFromBackend } from "@/lib/generation.functions";
 import { checkPhoto } from "@/lib/photo-check.functions";
 import type { PhotoCheck } from "@/lib/photo-check";
 import { Button } from "@/components/ui/button";
