@@ -5,5 +5,6 @@ uvicorn[standard]==0.32.1
 requests==2.32.3
 huggingface_hub>=0.26
 fast-simplification==0.1.9
+pymeshfix>=0.17
 networkx>=3.0
 scipy>=1.10
