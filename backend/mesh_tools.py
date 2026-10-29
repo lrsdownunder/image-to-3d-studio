@@ -52,9 +52,29 @@ def _transfer_colours(source: trimesh.Trimesh, target: trimesh.Trimesh) -> None:
         )
 
 
+def _make_manifold(mesh: trimesh.Trimesh, attempts: int = 5) -> trimesh.Trimesh:
+    """Quadric decimation can leave edges shared by 3+ faces. Delete the faces
+    around those edges and re-seal until the shell is a valid watertight solid."""
+    for _ in range(attempts):
+        if mesh.is_watertight:
+            break
+        _, counts = np.unique(mesh.edges_sorted, axis=0, return_counts=True)
+        if not (counts > 2).any():
+            break  # open boundary only; fill_holes below handles it
+        bad_edges = mesh.edges_sorted[counts > 2]
+        bad_faces = np.isin(mesh.edges_sorted, bad_edges).all(axis=1)
+        mesh.update_faces(~np.isin(np.arange(len(mesh.faces)),
+                                   np.unique(mesh.edges_face[bad_faces])))
+        mesh.remove_unreferenced_vertices()
+        trimesh.repair.fill_holes(mesh)
+        trimesh.repair.fix_normals(mesh)
+    return mesh
+
+
 def _decimate(mesh: trimesh.Trimesh, target_faces: int) -> trimesh.Trimesh:
     if len(mesh.faces) > target_faces:
         mesh = mesh.simplify_quadric_decimation(face_count=target_faces)
+        mesh = _make_manifold(mesh)
         if mesh.is_watertight and mesh.volume < 0:
             mesh.invert()
     return mesh
