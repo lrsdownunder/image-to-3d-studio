@@ -1,4 +1,10 @@
-# Image to 3D Studio
+# Majoto 3D
+
+## Project tracking
+
+Start with the [project hub](docs/project/README.md) for current tasks, setup notes, decisions, test records and session handovers. Track work in [GitHub Issues](https://github.com/lrsdownunder/image-to-3d-studio/issues).
+
+## Original project brief
 
 There is a website / web app called meshy ai. It turns any image into a 3d printable design. 
 
