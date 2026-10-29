@@ -5,6 +5,7 @@ import { readSecret } from "@/lib/env-secret";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   BACKEND_NOT_CONNECTED,
+  callbackSchema,
   OUTPUT_FORMATS,
   jobOptionsSchema,
   outputPath,
@@ -156,4 +157,39 @@ export const createImageTo3DJob = createServerFn({ method: "POST" })
       .update({ backend_job_id: accepted.job_id ?? job.id })
       .eq("id", job.id);
     return { jobId: job.id, configured: true as const };
+  });
+
+/**
+ * Asks the GPU for a job's progress and saves it. Needed when the GPU's callbacks can't reach
+ * the site (e.g. the private preview link blocks them). Only the job's owner may sync it.
+ */
+export const syncJobFromBackend = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ jobId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: job } = await context.supabase
+      .from("generation_jobs")
+      .select("id, status")
+      .eq("id", data.jobId)
+      .maybeSingle();
+    if (!job) return { ok: false as const };
+    if (job.status === "done" || job.status === "failed") return { ok: true as const };
+
+    const url = readSecret("GENERATION_BACKEND_URL");
+    const token = readSecret("GENERATION_BACKEND_TOKEN");
+    if (!url || !token) return { ok: false as const };
+    try {
+      const res = await fetch(`${url.replace(/\/+$/, "")}/v1/jobs/${job.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!res.ok) return { ok: false as const };
+      const parsed = callbackSchema.safeParse({ ...(await res.json()), job_id: job.id });
+      if (!parsed.success) return { ok: false as const };
+      const { applyJobUpdate } = await import("@/lib/job-update.server");
+      await applyJobUpdate(parsed.data);
+      return { ok: true as const };
+    } catch {
+      return { ok: false as const };
+    }
   });
