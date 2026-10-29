@@ -22,39 +22,10 @@ export const Route = createFileRoute("/api/public/generation-callback")({
           return new Response("Invalid body", { status: 400 });
         }
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { data: job } = await supabaseAdmin
-          .from("generation_jobs")
-          .select("id, user_id, status, options")
-          .eq("id", body.job_id)
-          .maybeSingle();
-        if (!job) return new Response("Unknown job", { status: 404 });
-        if (job.status === "done") return Response.json({ ok: true, duplicate: true });
-
-        await supabaseAdmin
-          .from("generation_jobs")
-          .update({
-            status: body.status,
-            progress: body.status === "done" ? 100 : (body.progress ?? 0),
-            error: body.error ?? null,
-          })
-          .eq("id", job.id);
-
-        if (body.status === "done") {
-          const o = body.outputs ?? {};
-          const title = (job.options as { title?: string | null })?.title || "Untitled model";
-          await supabaseAdmin.from("models").insert({
-            user_id: job.user_id,
-            job_id: job.id,
-            title,
-            glb_path: o.glb ? outputPath(job.user_id, job.id, "glb") : null,
-            obj_path: o.obj ? outputPath(job.user_id, job.id, "obj") : null,
-            stl_path: o.stl ? outputPath(job.user_id, job.id, "stl") : null,
-            thumbnail_path: o.thumbnail ? outputPath(job.user_id, job.id, "thumbnail") : null,
-            face_count: body.face_count ?? null,
-          });
-        }
-        return Response.json({ ok: true });
+        const { applyJobUpdate } = await import("@/lib/job-update.server");
+        const r = await applyJobUpdate(body);
+        if (r === "unknown") return new Response("Unknown job", { status: 404 });
+        return Response.json({ ok: true, duplicate: r === "duplicate" });
       },
     },
   },

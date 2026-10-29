@@ -16,3 +16,4 @@
 - Uploads and outputs live in private buckets under `<user_id>/...` and are served via signed URLs; the GPU only gets signed URLs, never Cloud keys.
 - The three.js viewer is loaded through `LazyViewer` (ClientOnly + lazy) so three never runs during SSR.
 - The GPU backend must use only commercially licensed parts by default (no nvdiffrast/nvdiffrec, no RMBG-2.0); non-commercial components stay behind an opt-in evaluation flag, because 3DIT is a commercial product.
+- Job progress is also pulled from the GPU by the owner (`syncJobFromBackend`) and applied via `applyJobUpdate`, because GPU callbacks cannot reach the private preview URL.

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, CheckCircle2, ImageUp, Loader2, PlugZap, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { createImageTo3DJob, getBackendStatus } from "@/lib/generation.functions";
+import { createImageTo3DJob, getBackendStatus, syncJobFromBackend } from "@/lib/generation.functions";
 import { checkPhoto } from "@/lib/photo-check.functions";
 import type { PhotoCheck } from "@/lib/photo-check";
 import { Button } from "@/components/ui/button";
@@ -70,6 +70,34 @@ function CreatePage() {
       supabase.removeChannel(channel);
     };
   }, [job?.id]);
+
+  // Resume the most recent unfinished job after a page reload.
+  useEffect(() => {
+    supabase
+      .from("generation_jobs")
+      .select("*")
+      .in("status", ["queued", "processing"])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setJob((cur) => cur ?? data);
+      });
+  }, []);
+
+  // Fallback: ask the GPU for progress directly (its callbacks can't reach a private preview link).
+  const syncFn = useServerFn(syncJobFromBackend);
+  const jobActive = job && (job.status === "queued" || job.status === "processing");
+  useEffect(() => {
+    if (!job?.id || !jobActive) return;
+    const id = job.id;
+    const timer = setInterval(async () => {
+      await syncFn({ data: { jobId: id } }).catch(() => null);
+      const { data } = await supabase.from("generation_jobs").select("*").eq("id", id).single();
+      if (data) setJob(data);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [job?.id, jobActive, syncFn]);
 
   function pick(f: File | undefined) {
     if (!f) return;
