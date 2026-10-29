@@ -91,7 +91,12 @@ export default function ModelViewer({ glbUrl, downloads, fileName = "3dit-model"
   const [wireframe, setWireframe] = useState(false);
   const [autoRotate, setAutoRotate] = useState(true);
   const objectRef = useRef<THREE.Object3D | null>(null);
-  const onLoad = useMemo(() => (o: THREE.Object3D) => (objectRef.current = o), []);
+  const onLoad = useMemo(
+    () => (o: THREE.Object3D) => {
+      objectRef.current = o;
+    },
+    [],
+  );
 
   function exportLocal(kind: "glb" | "obj" | "stl") {
     const obj = objectRef.current;
