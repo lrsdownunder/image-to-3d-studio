@@ -155,6 +155,8 @@ function CreatePage() {
               : backend.loading
                 ? "AI server is starting up (loading the model)…"
                 : backend.error ?? "AI server not ready"}
+            {backend.tokenAccepted === true && <span className="ml-auto text-success">Key accepted</span>}
+            {backend.tokenAccepted === false && <span className="ml-auto text-destructive">Key rejected</span>}
           </div>
         )}
 
@@ -287,7 +289,13 @@ function JobStatus({ job }: { job: Job }) {
         <span className="font-mono text-muted-foreground">{job.progress}%</span>
       </div>
       <Progress value={job.progress} />
-      {job.status === "failed" && <p className="text-sm text-destructive">{job.error}</p>}
+      {job.status === "failed" && (
+        <p className="text-sm text-destructive">
+          {job.error?.startsWith("Backend error 401")
+            ? "3DIT's key doesn't match your GPU server. Update the key in settings, then try again."
+            : job.error}
+        </p>
+      )}
       {job.status === "done" && (
         <Button asChild>
           <Link to="/library">Open in library</Link>
