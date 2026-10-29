@@ -17,11 +17,11 @@
 - Current GPU health and installed code version.
 - Comparative model quality and print readiness.
 
-### Blocker
-Native GitHub Projects creation is not exposed by the connected tools. Browser sign-in is required to create the board. The notebook's initial task table is available meanwhile.
+### Board completed
+Browser sign-in succeeded on retry. Created the private [Majoto 3D board](https://github.com/users/lrsdownunder/projects/2/views/1) with Ideas, Next, In Progress, Needs testing and Done. Imported issues #1–#5; #1 and #2 are in Needs testing, #3–#5 in Next. The board is the current status source of truth.
 
 ### Next action
-Create/link a private Majoto 3D Project with statuses Ideas, Next, In progress, Needs testing and Done. Add issues #1–#5; #1 and #2 start in Needs testing, #3–#5 in Next. Then verify the published viewer (#2).
+Verify the published viewer (#2), record the actual result and move the card only when acceptance checks pass.
 
 ## Reusable handover
 
