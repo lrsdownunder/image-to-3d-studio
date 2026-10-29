@@ -52,31 +52,30 @@ def _transfer_colours(source: trimesh.Trimesh, target: trimesh.Trimesh) -> None:
         )
 
 
-def _make_manifold(mesh: trimesh.Trimesh, attempts: int = 5) -> trimesh.Trimesh:
-    """Quadric decimation can leave edges shared by 3+ faces. Delete the faces
-    around those edges and re-seal until the shell is a valid watertight solid."""
-    for _ in range(attempts):
-        if mesh.is_watertight:
-            break
-        unique_edges, counts = np.unique(mesh.edges_sorted, axis=0, return_counts=True)
-        if not (counts > 2).any():
-            break  # open boundary only; fill_holes below handles it
-        bad_edges = unique_edges[counts > 2]
-        bad = np.isin(mesh.edges_sorted, bad_edges).all(axis=1)
-        mesh.update_faces(~np.isin(np.arange(len(mesh.faces)),
-                                   np.unique(mesh.edges_face[bad])))
-        mesh.remove_unreferenced_vertices()
+def _meshfix(mesh: trimesh.Trimesh) -> trimesh.Trimesh:
+    """Make the shell watertight and manifold with MeshFix. Decimation leaves
+    edges shared by 3+ faces (internal junk triangles), which slicers reject;
+    MeshFix removes them. Falls back to the input mesh if pymeshfix is absent."""
+    try:
+        import pymeshfix
+    except ImportError:
+        print("[mesh_tools] pymeshfix not installed; skipping manifold repair")
         trimesh.repair.fill_holes(mesh)
         trimesh.repair.fix_normals(mesh)
-    return mesh
+        return mesh
+    v, f = pymeshfix.clean_from_arrays(
+        np.asarray(mesh.vertices, dtype=np.float64),
+        np.asarray(mesh.faces, dtype=np.int32),
+    )
+    return trimesh.Trimesh(np.asarray(v), np.asarray(f).reshape(-1, 3), process=False)
 
 
 def _decimate(mesh: trimesh.Trimesh, target_faces: int) -> trimesh.Trimesh:
     if len(mesh.faces) > target_faces:
         mesh = mesh.simplify_quadric_decimation(face_count=target_faces)
-        mesh = _make_manifold(mesh)
-        if mesh.is_watertight and mesh.volume < 0:
-            mesh.invert()
+    mesh = _meshfix(mesh)
+    if mesh.is_watertight and mesh.volume < 0:
+        mesh.invert()
     return mesh
 
 
