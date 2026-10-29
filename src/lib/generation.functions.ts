@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
-import { readSecret } from "@/lib/env-secret.server";
+import { readSecret } from "@/lib/env-secret";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   BACKEND_NOT_CONNECTED,
