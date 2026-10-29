@@ -18,6 +18,8 @@ export type BackendHealth = {
   loading: boolean;
   gpu: string | null;
   error: string | null;
+  /** null = not checked; true/false = the GPU accepted/rejected 3DIT's key. Never reveals the key. */
+  tokenAccepted: boolean | null;
 };
 
 /** Tells the UI whether the GPU backend is configured and healthy (never reveals secrets). */
@@ -25,13 +27,21 @@ export const getBackendStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async (): Promise<BackendHealth> => {
     const url = readSecret("GENERATION_BACKEND_URL");
-    const configured = Boolean(
-      url && readSecret("GENERATION_BACKEND_TOKEN") && readSecret("GENERATION_CALLBACK_SECRET"),
-    );
-    const base = { configured, reachable: false, modelLoaded: false, loading: false, gpu: null, error: null };
-    if (!configured || !url) return base;
+    const token = readSecret("GENERATION_BACKEND_TOKEN");
+    const configured = Boolean(url && token && readSecret("GENERATION_CALLBACK_SECRET"));
+    const base: BackendHealth = {
+      configured,
+      reachable: false,
+      modelLoaded: false,
+      loading: false,
+      gpu: null,
+      error: null,
+      tokenAccepted: null,
+    };
+    if (!configured || !url || !token) return base;
+    const root = url.replace(/\/+$/, "");
     try {
-      const res = await fetch(`${url.replace(/\/+$/, "")}/health`, { signal: AbortSignal.timeout(5000) });
+      const res = await fetch(`${root}/health`, { signal: AbortSignal.timeout(5000) });
       if (!res.ok) return { ...base, error: `Health check returned ${res.status}` };
       const h = (await res.json()) as {
         model_loaded?: boolean;
@@ -39,6 +49,18 @@ export const getBackendStatus = createServerFn({ method: "GET" })
         load_error?: string | null;
         gpu?: { name?: string | null };
       };
+      // Harmless authenticated request: 401 = key rejected, anything else (e.g. 404) = key accepted.
+      let tokenAccepted: boolean | null = null;
+      try {
+        const k = await fetch(`${root}/v1/jobs/__keycheck`, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: AbortSignal.timeout(5000),
+        });
+        tokenAccepted = k.status !== 401;
+        console.log(`[3DIT] key check: status ${k.status}`);
+      } catch {
+        tokenAccepted = null;
+      }
       return {
         configured,
         reachable: true,
@@ -46,6 +68,7 @@ export const getBackendStatus = createServerFn({ method: "GET" })
         loading: Boolean(h.loading),
         gpu: h.gpu?.name ?? null,
         error: h.load_error ?? null,
+        tokenAccepted,
       };
     } catch {
       return { ...base, error: "AI server did not respond" };
