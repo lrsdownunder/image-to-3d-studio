@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/_authenticated/library")({
   head: () => ({
     meta: [
-      { title: "Your library — 3DIT" },
+      { title: "Your library — Majoto 3D" },
       { name: "description", content: "All your 3D models and generation jobs." },
-      { property: "og:title", content: "Your library — 3DIT" },
+      { property: "og:title", content: "Your library — Majoto 3D" },
       { property: "og:description", content: "All your 3D models and generation jobs." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

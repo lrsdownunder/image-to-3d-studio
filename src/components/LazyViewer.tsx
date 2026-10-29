@@ -39,7 +39,7 @@ class ViewerBoundary extends Component<{ children: ReactNode }, { error: Error |
   override render() {
     if (!this.state.error) return this.props.children;
     return (
-      <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 rounded-xl border border-border bg-viewport p-6 text-center">
+      <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 rounded-xl border border-border bg-viewport p-6 text-center text-viewport-foreground">
         <p className="font-medium text-foreground">The 3D view couldn't load.</p>
         <p className="max-w-md font-mono text-xs text-muted-foreground break-words">
           {this.state.error.message}

@@ -18,9 +18,9 @@ import type { Tables } from "@/integrations/supabase/types";
 export const Route = createFileRoute("/_authenticated/create")({
   head: () => ({
     meta: [
-      { title: "Create a 3D model — 3DIT" },
+      { title: "Create a 3D model — Majoto 3D" },
       { name: "description", content: "Upload a photo and turn it into a 3D model." },
-      { property: "og:title", content: "Create a 3D model — 3DIT" },
+      { property: "og:title", content: "Create a 3D model — Majoto 3D" },
       { property: "og:description", content: "Upload a photo and turn it into a 3D model." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -320,7 +320,7 @@ function JobStatus({ job }: { job: Job }) {
       {job.status === "failed" && (
         <p className="text-sm text-destructive">
           {job.error?.startsWith("Backend error 401")
-            ? "3DIT's key doesn't match your GPU server. Update the key in settings, then try again."
+            ? "Majoto 3D's key doesn't match your GPU server. Update the key in settings, then try again."
             : job.error}
         </p>
       )}

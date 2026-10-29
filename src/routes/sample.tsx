@@ -4,9 +4,9 @@ import { LazyViewer } from "@/components/LazyViewer";
 export const Route = createFileRoute("/sample")({
   head: () => ({
     meta: [
-      { title: "3D viewer preview — 3DIT" },
-      { name: "description", content: "Try the 3DIT viewer: spin, zoom, wireframe and STL/OBJ/GLB download with a sample shape." },
-      { property: "og:title", content: "3D viewer preview — 3DIT" },
+      { title: "3D viewer preview — Majoto 3D" },
+      { name: "description", content: "Try the Majoto 3D viewer: spin, zoom, wireframe and STL/OBJ/GLB download with a sample shape." },
+      { property: "og:title", content: "3D viewer preview — Majoto 3D" },
       { property: "og:description", content: "Spin, zoom and download a sample 3D shape." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

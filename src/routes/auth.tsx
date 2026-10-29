@@ -10,9 +10,9 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — 3DIT" },
-      { name: "description", content: "Sign in to 3DIT to create and keep your 3D models." },
-      { property: "og:title", content: "Sign in — 3DIT" },
+      { title: "Sign in — Majoto 3D" },
+      { name: "description", content: "Sign in to Majoto 3D to create and keep your 3D models." },
+      { property: "og:title", content: "Sign in — Majoto 3D" },
       { property: "og:description", content: "Sign in to create 3D models from photos." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
