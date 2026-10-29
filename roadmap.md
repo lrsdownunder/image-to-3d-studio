@@ -17,3 +17,4 @@
 - [ ] Phase 2: pull updated backend on RunPod (`git pull` + `pip install -r requirements.txt`) and generate one test model to verify closed bottoms
 - [ ] Phase 3: Blender clean-up, print sizing in mm
 - [ ] Phase 4: Text-to-image-to-3D with a self-hosted, commercially licensed image model
+- [ ] Build & test preinstalled GPU server image (GitHub builds it; not yet run)
