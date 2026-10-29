@@ -161,11 +161,13 @@ export default function ModelViewer({ glbUrl, downloads, fileName = "3dit-model"
         <div className="flex items-center gap-4 text-sm">
           <div className="flex items-center gap-2">
             <Switch id="wire" checked={wireframe} onCheckedChange={setWireframe} />
-            X
+            <Label htmlFor="wire">Wireframe</Label>
+          </div>
           <div className="flex items-center gap-2">
             <Switch id="spin" checked={autoRotate} onCheckedChange={setAutoRotate} />
             <Label htmlFor="spin">Auto-spin</Label>
           </div>
+          <span className="hidden text-xs text-muted-foreground md:inline">Drag to rotate · scroll or pinch to zoom</span>
         </div>
         <div className="flex gap-2">
           {(["stl", "obj", "glb"] as const).map((k) =>

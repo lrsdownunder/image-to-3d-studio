@@ -1,9 +1,12 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Box } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { Logo } from "@/components/Logo";
+
+const navLink =
+  "rounded-full px-3 py-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground [&.active]:bg-secondary [&.active]:text-foreground";
 
 export function SiteHeader() {
   const { session } = useSession();
@@ -18,32 +21,29 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-2 font-bold tracking-tight">
-          <span className="grid size-7 place-items-center rounded-md bg-gradient-primary text-primary-foreground">
-            <Box className="size-4" />
-          </span>
-          3DIT
+    <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-4">
+        <Link to="/" aria-label="Majoto 3D home">
+          <Logo />
         </Link>
-        <nav className="flex items-center gap-1 text-sm">
-          <Link to="/sample" className="px-3 py-2 text-muted-foreground hover:text-foreground">
+        <nav className="flex items-center gap-1 text-sm font-semibold">
+          <Link to="/sample" className={navLink}>
             Viewer
           </Link>
           {session ? (
             <>
-              <Link to="/create" className="px-3 py-2 text-muted-foreground hover:text-foreground">
+              <Link to="/create" className={navLink}>
                 Create
               </Link>
-              <Link to="/library" className="px-3 py-2 text-muted-foreground hover:text-foreground">
+              <Link to="/library" className={navLink}>
                 Library
               </Link>
-              <Button variant="ghost" size="sm" onClick={signOut}>
+              <Button variant="ghost" size="sm" className="rounded-full" onClick={signOut}>
                 Sign out
               </Button>
             </>
           ) : (
-            <Button asChild size="sm">
+            <Button asChild size="sm" className="rounded-full">
               <Link to="/auth">Sign in</Link>
             </Button>
           )}
