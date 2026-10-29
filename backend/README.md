@@ -68,6 +68,14 @@ If the image has no CUDA 12.4 compiler, `install.sh` installs one inside its own
 `install.sh` and `start.sh` point every cache (`HF_HOME`, `PIP_CACHE_DIR`, `TORCH_HOME`,
 temporary build files) at `/workspace`, so nothing large is lost when the pod stops.
 
+**Updating the backend after a code change:** pull the new files, then refresh the
+Python dependencies so additions like `pymeshfix` (mesh hole-closing) are present:
+```bash
+cd /root/3dit-backend && git pull
+source /workspace/miniconda3/etc/profile.d/conda.sh && conda activate trellis2
+pip install -r requirements.txt
+```
+
 **Time:** first install ≈ 30–60 min (it compiles GPU code). First start ≈ 5–10 min
 (downloads the model). Each job ≈ 1–3 min depending on GPU and settings.
 
