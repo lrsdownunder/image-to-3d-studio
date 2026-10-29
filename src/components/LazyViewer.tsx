@@ -29,14 +29,14 @@ const Fallback = () => (
 
 /** Keeps a 3D viewer problem inside the viewer box instead of taking down the whole page. */
 class ViewerBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
-  state = { error: null as Error | null };
-  static getDerivedStateFromError(error: Error) {
+  override state = { error: null as Error | null };
+  static override getDerivedStateFromError(error: Error) {
     return { error };
   }
-  componentDidCatch(error: Error) {
+  override componentDidCatch(error: Error) {
     console.error("[3DIT] viewer error:", error);
   }
-  render() {
+  override render() {
     if (!this.state.error) return this.props.children;
     return (
       <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 rounded-xl border border-border bg-viewport p-6 text-center">
