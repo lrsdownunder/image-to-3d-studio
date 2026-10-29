@@ -71,6 +71,20 @@ function CreatePage() {
     };
   }, [job?.id]);
 
+  // Resume the most recent unfinished job after a page reload.
+  useEffect(() => {
+    supabase
+      .from("generation_jobs")
+      .select("*")
+      .in("status", ["queued", "processing"])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setJob((cur) => cur ?? data);
+      });
+  }, []);
+
   // Fallback: ask the GPU for progress directly (its callbacks can't reach a private preview link).
   const syncFn = useServerFn(syncJobFromBackend);
   const jobActive = job && (job.status === "queued" || job.status === "processing");
