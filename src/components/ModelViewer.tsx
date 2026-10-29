@@ -35,8 +35,28 @@ function applyWireframe(root: THREE.Object3D, on: boolean) {
   });
 }
 
+/**
+ * AI-generated meshes often have some triangles wound the wrong way. With the default
+ * one-sided material those faces are invisible, which shows up as dark speckles/holes.
+ * Drawing both sides makes the surface look solid regardless of winding.
+ */
+function showBothSides(root: THREE.Object3D) {
+  root.traverse((o) => {
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    mats.forEach((m) => {
+      m.side = THREE.DoubleSide;
+      m.needsUpdate = true;
+    });
+  });
+}
+
 function GlbModel({ url, wireframe, onLoad }: { url: string; wireframe: boolean; onLoad: (o: THREE.Object3D) => void }) {
   const { scene } = useGLTF(url);
+  useEffect(() => {
+    showBothSides(scene);
+  }, [scene]);
   useEffect(() => {
     onLoad(scene);
   }, [scene, onLoad]);
