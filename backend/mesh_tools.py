@@ -14,7 +14,14 @@ def export_all(viewer_glb: str, print_mesh: str, out_dir: str, target_faces: int
         "obj": os.path.join(out_dir, "model.obj"),
         "stl": os.path.join(out_dir, "model.stl"),
     }
-    trimesh.load(viewer_glb, force="scene").export(files["glb"])
+    # TRELLIS.2 / CuMesh output has many triangles wound the wrong way, which viewers show
+    # as dark speckles. Weld vertices and re-orient faces consistently before export.
+    scene = trimesh.load(viewer_glb, force="scene")
+    for geom in scene.geometry.values():
+        if isinstance(geom, trimesh.Trimesh):
+            geom.merge_vertices(merge_tex=True, merge_norm=True)
+            trimesh.repair.fix_normals(geom)
+    scene.export(files["glb"])
 
     mesh = trimesh.load(print_mesh, force="mesh")
     mesh.merge_vertices()
