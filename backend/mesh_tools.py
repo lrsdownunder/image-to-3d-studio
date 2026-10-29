@@ -58,13 +58,13 @@ def _make_manifold(mesh: trimesh.Trimesh, attempts: int = 5) -> trimesh.Trimesh:
     for _ in range(attempts):
         if mesh.is_watertight:
             break
-        _, counts = np.unique(mesh.edges_sorted, axis=0, return_counts=True)
+        unique_edges, counts = np.unique(mesh.edges_sorted, axis=0, return_counts=True)
         if not (counts > 2).any():
             break  # open boundary only; fill_holes below handles it
-        bad_edges = mesh.edges_sorted[counts > 2]
-        bad_faces = np.isin(mesh.edges_sorted, bad_edges).all(axis=1)
+        bad_edges = unique_edges[counts > 2]
+        bad = np.isin(mesh.edges_sorted, bad_edges).all(axis=1)
         mesh.update_faces(~np.isin(np.arange(len(mesh.faces)),
-                                   np.unique(mesh.edges_face[bad_faces])))
+                                   np.unique(mesh.edges_face[bad])))
         mesh.remove_unreferenced_vertices()
         trimesh.repair.fill_holes(mesh)
         trimesh.repair.fix_normals(mesh)
