@@ -42,10 +42,23 @@ RUN git clone -b main --recursive https://github.com/microsoft/TRELLIS.2.git /op
     && ! grep -q postprocess o-voxel/o_voxel/__init__.py \
     && sed -i 's/^\(\s*\)pip install pillow-simd$/\1pip install pillow-simd || pip install pillow/' setup.sh
 
-# CUDA extensions compile without a GPU because TORCH_CUDA_ARCH_LIST is fixed above (A6000 = 8.6).
-# GitHub has no GPU, so only check that packages are installed (not imported; importing needs a GPU driver).
-RUN nvcc --version && cd /opt/TRELLIS.2 && (. ./setup.sh --basic --cumesh --o-voxel --flexgemm || true) \
-    && for m in cumesh flex_gemm o_voxel utils3d trimesh transformers flash_attn; do \
+# TRELLIS.2's setup.sh stops with "No supported GPU found" when nvidia-smi is missing (GitHub has no GPU),
+# so its steps are copied here one by one. CUDA extensions compile without a GPU because
+# TORCH_CUDA_ARCH_LIST is fixed above (A6000 = 8.6). Separate RUN steps make a failure easy to spot.
+RUN pip install --no-cache-dir imageio imageio-ffmpeg tqdm easydict opencv-python-headless ninja trimesh \
+      transformers tensorboard pandas lpips zstandard plyfile kornia timm pillow \
+    && pip install --no-cache-dir git+https://github.com/EasternJournalist/utils3d.git@9a4eb15e4021b67b12c460c7057d642626897ec8
+RUN nvcc --version \
+    && git clone --recursive https://github.com/JeffreyXiang/CuMesh.git /tmp/ext/CuMesh \
+    && pip install --no-cache-dir /tmp/ext/CuMesh --no-build-isolation
+RUN git clone --recursive https://github.com/JeffreyXiang/FlexGEMM.git /tmp/ext/FlexGEMM \
+    && pip install --no-cache-dir /tmp/ext/FlexGEMM --no-build-isolation
+# --no-deps: o-voxel would otherwise try to rebuild CuMesh/FlexGEMM from git; their deps are installed above.
+RUN cp -r /opt/TRELLIS.2/o-voxel /tmp/ext/o-voxel \
+    && pip install --no-cache-dir /tmp/ext/o-voxel --no-build-isolation --no-deps \
+    && rm -rf /tmp/ext
+# Only check packages are installed (importing CUDA code needs a GPU driver, which GitHub lacks).
+RUN for m in cumesh flex_gemm o_voxel utils3d trimesh transformers flash_attn; do \
          python -c "import importlib.util,sys; sys.exit(0 if importlib.util.find_spec('$m') else 1)" \
          || { echo "MISSING package: $m"; exit 1; }; done
 
