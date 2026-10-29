@@ -15,7 +15,9 @@ Start here at every work session. GitHub issues track individual tasks; this not
 Use the issue links below if your Markdown viewer does not resolve repository-relative issue links:
 https://github.com/lrsdownunder/image-to-3d-studio/issues
 
-The table is the initial snapshot on 29 October 2026 (Australia/Perth). Update it when moving work. A native GitHub Projects board is pending browser sign-in; this table is not a live board.
+[Open the private Majoto 3D board](https://github.com/users/lrsdownunder/projects/2/views/1).
+
+The table above is the initial snapshot on 29 October 2026 (Australia/Perth). Use the board Status field as the current source of truth. Update issue notes and this snapshot when useful; they do not automatically mirror board movements.
 
 ## Workflow
 
