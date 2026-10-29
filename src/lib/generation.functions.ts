@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
+import { readSecret } from "@/lib/env-secret.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   BACKEND_NOT_CONNECTED,
@@ -23,9 +24,9 @@ export type BackendHealth = {
 export const getBackendStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async (): Promise<BackendHealth> => {
-    const url = process.env["GENERATION_BACKEND_URL"];
+    const url = readSecret("GENERATION_BACKEND_URL");
     const configured = Boolean(
-      url && process.env["GENERATION_BACKEND_TOKEN"] && process.env["GENERATION_CALLBACK_SECRET"],
+      url && readSecret("GENERATION_BACKEND_TOKEN") && readSecret("GENERATION_CALLBACK_SECRET"),
     );
     const base = { configured, reachable: false, modelLoaded: false, loading: false, gpu: null, error: null };
     if (!configured || !url) return base;
@@ -79,9 +80,9 @@ export const createImageTo3DJob = createServerFn({ method: "POST" })
       .single();
     if (error || !job) throw new Error(`Could not save job: ${error?.message}`);
 
-    const backendUrl = process.env["GENERATION_BACKEND_URL"];
-    const backendToken = process.env["GENERATION_BACKEND_TOKEN"];
-    const callbackSecret = process.env["GENERATION_CALLBACK_SECRET"];
+    const backendUrl = readSecret("GENERATION_BACKEND_URL");
+    const backendToken = readSecret("GENERATION_BACKEND_TOKEN");
+    const callbackSecret = readSecret("GENERATION_CALLBACK_SECRET");
 
     if (!backendUrl || !backendToken || !callbackSecret) {
       await supabaseAdmin

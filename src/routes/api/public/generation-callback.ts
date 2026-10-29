@@ -1,13 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { callbackSchema, outputPath } from "@/lib/backend-contract";
 import { verifySignature } from "@/lib/hmac";
+import { readSecret } from "@/lib/env-secret.server";
 
 // Called by the GPU backend (FastAPI on RunPod). Only signed requests are accepted.
 export const Route = createFileRoute("/api/public/generation-callback")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const secret = process.env["GENERATION_CALLBACK_SECRET"];
+        const secret = readSecret("GENERATION_CALLBACK_SECRET");
         if (!secret) return new Response("Not configured", { status: 503 });
 
         const raw = await request.text();
