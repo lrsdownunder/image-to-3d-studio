@@ -71,6 +71,20 @@ function CreatePage() {
     };
   }, [job?.id]);
 
+  // Fallback: ask the GPU for progress directly (its callbacks can't reach a private preview link).
+  const syncFn = useServerFn(syncJobFromBackend);
+  const jobActive = job && (job.status === "queued" || job.status === "processing");
+  useEffect(() => {
+    if (!job?.id || !jobActive) return;
+    const id = job.id;
+    const timer = setInterval(async () => {
+      await syncFn({ data: { jobId: id } }).catch(() => null);
+      const { data } = await supabase.from("generation_jobs").select("*").eq("id", id).single();
+      if (data) setJob(data);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [job?.id, jobActive, syncFn]);
+
   function pick(f: File | undefined) {
     if (!f) return;
     if (!/^image\/(png|jpeg|webp)$/.test(f.type)) {
